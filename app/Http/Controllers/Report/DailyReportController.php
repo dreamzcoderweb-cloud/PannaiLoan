@@ -58,7 +58,7 @@ class DailyReportController extends Controller
         })->whereHas('details', function ($query) use ($date) {
             $query->whereDate('due_date', $date->toDateString())
                 ->orWhereDate('paid_date', $date->toDateString());
-        })->get();
+        })->orderBy('id', 'desc')->get();
 
 
         //previous total paid amount
@@ -324,7 +324,8 @@ class DailyReportController extends Controller
         $from_date = $request->from_date;
         $to_date = $request->to_date;
 
-        $query = LoanAssign::with(['client_name', 'loan', 'branches', 'routes', 'employee']);
+        $query = LoanAssign::with(['client_name', 'loan', 'branches', 'routes', 'employee'])
+        ->orderBy('id', 'desc');
 
         if ($from_date && $to_date) {
             $query->whereDate('created_at', '>=', $from_date)
@@ -361,7 +362,7 @@ public function Filter(Request $request)
     ])->whereHas('details', function ($query) use ($fromDate, $toDate) {
         $query->whereBetween('due_date', [$fromDate, $toDate])
             ->orWhereBetween('paid_date', [$fromDate, $toDate]);
-    })->get();
+    })->orderBy('id', 'desc')->get();
 
     $loans = LoanAssign::whereDate('created_at', '>=', $fromDate)
         ->whereDate('created_at', '<=', $toDate)

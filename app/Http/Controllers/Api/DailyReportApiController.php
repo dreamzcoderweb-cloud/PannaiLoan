@@ -312,7 +312,8 @@ class DailyReportApiController extends Controller
         ->whereHas('emicollection', function ($query) use ($user) {
             $query->where('Collect_by', 'Employee')
                   ->where('emp_id', $user->id);
-        });
+        })
+        ->orderBy('id', 'desc');
 
         /*
         |--------------------------------------------------------------------------
@@ -480,6 +481,7 @@ class DailyReportApiController extends Controller
             ->whereHas('emicollection', function ($query) {
                 $query->where('Collect_by', 'Employee');
             })
+            ->orderBy('id', 'desc')
             ->get();
 
             // Group by employee ID

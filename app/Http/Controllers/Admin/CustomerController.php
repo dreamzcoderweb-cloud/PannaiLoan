@@ -24,7 +24,7 @@ class CustomerController extends Controller
                 'name' => [
                     'required',
                     'min:3',
-                    'max:20',
+                    'max:50',
                     'regex:/^[A-Za-z\s]+$/'
                 ],
                 'phone' => [
