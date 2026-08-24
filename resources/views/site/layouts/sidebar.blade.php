@@ -26,6 +26,17 @@
                     </a>
                 </li>
 
+                <!-- Profile - Super Admin Only -->
+                @if(strtolower(auth()->user()->roles->first()?->name ?? '') === 'admin' || auth()->user()->hasRole(['ADMIN', 'admin']))
+                    <li>
+                        <a href="{{ route('admin.profile') }}"
+                            class="{{ request()->routeIs('admin.profile') ? 'active' : '' }}">
+                            <i class="ti ti-user-circle" style="margin-right: 10px;"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                @endif
+
                 <!-- Access Control Menu - Check if user has access control permissions -->
                 @canany(['staff-create', 'staff-list', 'role-create', 'role-list'])
                     <li class="submenu">

@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\EmiCollectionController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Report\DailyReportController;
 use App\Http\Controllers\Admin\ExpenseController;
+use App\Http\Controllers\Admin\ProfileController;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Report\CollectionSummaryController;
 /*
@@ -61,6 +62,10 @@ Route::middleware(['redirectmiddleware'])->prefix('admin')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'home'])->name('admin.dashboard');
+
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('admin.profile-update');
 
     //Staff CRUD
     Route::get('/staff/create', [StaffController::class, 'create'])->name('admin.staff-create')->middleware('check.permission:staff-create');

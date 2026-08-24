@@ -54,6 +54,12 @@
                                 </div>
                                 <hr class="my-2 opacity-50">
                                 <div class="card-body py-2">
+                                    @if(strtolower(auth()->user()->roles->first()?->name ?? '') === 'admin' || auth()->user()->hasRole(['ADMIN', 'admin']))
+                                        <a class="dropdown-item d-flex align-items-center rounded-2 py-2 px-3 mb-1" href="{{ route('admin.profile') }}">
+                                            <i class="ti ti-user-circle me-2 fs-18 text-primary"></i>
+                                            <span class="fw-medium">My Profile</span>
+                                        </a>
+                                    @endif
                                     <a class="dropdown-item d-flex align-items-center rounded-2 py-2 px-3" href="{{ route('admin.logout') }}">
                                         <i class="ti ti-login me-2 fs-18 text-danger"></i>
                                         <span class="fw-medium">Logout</span>
