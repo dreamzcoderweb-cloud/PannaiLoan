@@ -26,6 +26,25 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <!-- Branch Filter -->
+                    <form method="GET" action="{{ route('admin.customer-list') }}" class="mb-4" id="customerFilterForm">
+                        <div class="row align-items-end">
+                            <div class="col-md-4 col-lg-3">
+                                <div class="form-group mb-0">
+                                    <label for="branch_id" class="form-label fw-bold">Select Branch</label>
+                                    <select name="branch_id" id="branch_id" class="form-select" onchange="document.getElementById('customerFilterForm').submit();">
+                                        <option value="">All Branches</option>
+                                        @foreach($branches as $branch)
+                                            <option value="{{ $branch->id }}" {{ (isset($branch_id) && $branch_id == $branch->id) ? 'selected' : '' }}>
+                                                {{ $branch->branch_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
                     <div class="table-responsive">
                         <table class="table table-hover table-bordered table-striped" id="customerTable">
                             <thead class="table-primary">

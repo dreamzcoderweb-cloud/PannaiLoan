@@ -421,17 +421,42 @@ class EmiCollectionController extends Controller
     public function destroy($id)
     {
         try {
-
             $detail = EmicollectionDetail::findOrFail($id);
+            $emiCollectionId = $detail->emi_collection_id;
 
             $detail->delete();
 
+            // Recalculate totals for parent EMI collection
+            $masterCollection = Emicollection::find($emiCollectionId);
+            if ($masterCollection) {
+                $totalPaidAmount = EmicollectionDetail::where('emi_collection_id', $emiCollectionId)
+                    ->where('status', 'Paid')
+                    ->sum('paid_amount');
+
+                $totalPayableAmount = (float) $masterCollection->total_payable_amount;
+                $totalRemaining = max(0, $totalPayableAmount - $totalPaidAmount);
+
+                if ($totalPaidAmount >= $totalPayableAmount) {
+                    $newStatus = 'Completed';
+                } else if ($totalPaidAmount > 0) {
+                    $newStatus = 'Partially Paid';
+                } else {
+                    $newStatus = 'Pending';
+                }
+
+                $masterCollection->update([
+                    'total_collected' => $totalPaidAmount,
+                    'total_remaining' => $totalRemaining,
+                    'status'          => $newStatus,
+                    'updated_at'      => now(),
+                ]);
+            }
+
             return redirect()
-                ->route('admin.emicollection-list')
+                ->route('admin.emicollection-view', $emiCollectionId)
                 ->with('success', 'Record deleted successfully');
 
         } catch (\Exception $e) {
-
             return back()->with('error', 'Failed to delete record: ' . $e->getMessage());
         }
     }

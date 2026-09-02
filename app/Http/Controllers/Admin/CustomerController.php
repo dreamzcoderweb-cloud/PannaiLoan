@@ -66,8 +66,18 @@ class CustomerController extends Controller
 
     public function index(Request $request)
     {
-        $data = Customer::with(['branch', 'route', 'loanAssign.emiCollections.latestDetail'])->get();
-        return view('Admin.Customer.index', compact('data'));
+        $branches = Branch::all();
+        $branch_id = $request->branch_id;
+
+        $query = Customer::with(['branch', 'route', 'loanAssign.emiCollections.latestDetail']);
+
+        if ($branch_id) {
+            $query->where('branch_id', $branch_id);
+        }
+
+        $data = $query->get();
+
+        return view('Admin.Customer.index', compact('data', 'branches', 'branch_id'));
     }
     public function edit($id)
     {

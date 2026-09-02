@@ -180,12 +180,20 @@ class LoanAssignController extends Controller
         }
     }
 
-    // In your controller method
     public function index(Request $request)
     {
-       $data = LoanAssign::with('int', 'loan', 'branches', 'routes', 'client_name', 'latestEmiCollection.latestDetail','emiCollections')->get();
-        
-      return view('Admin.LoanAssign.index', compact('data'));
+        $branches = Branch::all();
+        $branch_id = $request->branch_id;
+
+        $query = LoanAssign::with('int', 'loan', 'branches', 'routes', 'client_name', 'latestEmiCollection.latestDetail', 'emiCollections');
+
+        if ($branch_id) {
+            $query->where('branch_id', $branch_id);
+        }
+
+        $data = $query->get();
+
+        return view('Admin.LoanAssign.index', compact('data', 'branches', 'branch_id'));
     }
 
     // Edit Form

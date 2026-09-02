@@ -306,12 +306,19 @@ class DailyReportApiController extends Controller
         $baseQuery = EmiCollectionDetail::with([
             'emicollection.clientname:id,name,phone',
             'emicollection.loanassign.loan:id,loan_name',
-            'emicollection.loanassign:id,loan_type_id,loan_amount,client_id'
+            'emicollection.loanassign:id,loan_type_id,loan_amount,client_id,branch_id,route_id'
         ])
         ->whereDate('paid_date', $date->toDateString())
         ->whereHas('emicollection', function ($query) use ($user) {
-            $query->where('Collect_by', 'Employee')
-                  ->where('emp_id', $user->id);
+            $query->where('Collect_by', 'Employee');
+            if (!empty($user->branch_id)) {
+                $query->whereHas('loanassign', function ($lq) use ($user) {
+                    $lq->where('branch_id', $user->branch_id);
+                    if (!empty($user->route_id)) {
+                        $lq->where('route_id', $user->route_id);
+                    }
+                });
+            }
         })
         ->orderBy('id', 'desc');
 
@@ -455,6 +462,9 @@ class DailyReportApiController extends Controller
                 ], 422);
             }
 
+            $user = $request->user();
+            $branchId = $user->branch_id ?? null;
+
             $selectedDate = $request->input('date') ?? now()->toDateString();
             $date = Carbon::parse($selectedDate);
 
@@ -463,23 +473,34 @@ class DailyReportApiController extends Controller
             $limit = (int) $request->input('limit', 10);
             $offset = ($page - 1) * $limit;
 
-            // Total employees count
-            $totalEmployees = MobileEmployee::count();
+            // Total employees count for staff branch
+            $employeeQuery = MobileEmployee::query();
+            if (!empty($branchId)) {
+                $employeeQuery->where('branch_id', $branchId);
+            }
+
+            $totalEmployees = (clone $employeeQuery)->count();
 
             // Paginated employees
-            $employees = MobileEmployee::skip($offset)
+            $employees = (clone $employeeQuery)
+                ->skip($offset)
                 ->take($limit)
                 ->get();
 
-            // Fetch all EMI details for selected date
+            // Fetch all EMI details for selected date, filtered by staff branch
             $allEmiDetails = EmiCollectionDetail::with([
                 'emicollection.clientname:id,name,phone',
                 'emicollection.loanassign.loan:id,loan_name',
-                'emicollection.loanassign:id,loan_type_id,loan_amount,client_id'
+                'emicollection.loanassign:id,loan_type_id,loan_amount,client_id,branch_id'
             ])
             ->whereDate('paid_date', $date->toDateString())
-            ->whereHas('emicollection', function ($query) {
+            ->whereHas('emicollection', function ($query) use ($branchId) {
                 $query->where('Collect_by', 'Employee');
+                if (!empty($branchId)) {
+                    $query->whereHas('loanassign', function ($lq) use ($branchId) {
+                        $lq->where('branch_id', $branchId);
+                    });
+                }
             })
             ->orderBy('id', 'desc')
             ->get();
