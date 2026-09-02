@@ -658,15 +658,17 @@ class EmiCollectionController extends Controller
             ];
         }
 
+        // $getemicollection = Emicollection::where('loan_assign_id', $getcustomer->id)
+        // ->where('emp_id', $user->id)
+        // ->where('Collect_by', 'Employee')
+        // ->get();
         $getemicollection = Emicollection::where('loan_assign_id', $getcustomer->id)
-        ->where('emp_id', $user->id)
-        ->where('Collect_by', 'Employee')
-        ->get();
+           ->get();
 
         $collectionIds = $getemicollection->pluck('id');
 
         $getemihistory = EmiCollectionDetail::whereIn('emi_collection_id', $collectionIds)
-            ->orderBy('installment_no', 'asc')
+            ->orderBy('installment_no', 'desc')
             ->get();
 
         $totalPaidAmount = (float) $getemihistory->sum('paid_amount');

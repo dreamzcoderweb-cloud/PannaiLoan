@@ -21,6 +21,19 @@
                         <div class="row align-items-end">
                             <div class="col-md-3">
                                 <div class="form-group">
+                                    <label for="branch_id">Select Branch</label>
+                                    <select name="branch_id" id="branch_id" class="form-control">
+                                        <option value="">All Branches</option>
+                                        @foreach($branches as $branch)
+                                            <option value="{{ $branch->id }}" {{ (isset($branch_id) && $branch_id == $branch->id) ? 'selected' : '' }}>
+                                                {{ $branch->branch_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
                                     <label for="fromDate">From Date <span class="text-danger">*</span></label>
                                     <input type="date" name="from_date" id="fromDate" class="form-control"
                                         value="{{ $from_date ?? '' }}" required>
@@ -33,16 +46,16 @@
                                         value="{{ $to_date ?? '' }}" required>
                                 </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <div class="form-group">
-                                    <button type="submit" id="generateBtn" class="btn btn-primary">
+                                    <button type="submit" id="generateBtn" class="btn btn-primary w-100">
                                         <i class="ti ti-search"></i> Generate Report
                                     </button>
                                 </div>
                             </div>
-                            <div class="col-md-4 text-end" id="dateRangeLabel">
+                            <div class="col-md-12 mt-2" id="dateRangeLabel">
                                 @if(isset($from_date) && isset($to_date) && $from_date != '' && $to_date != '')
-                                    <div class="alert alert-info mb-0">
+                                    <div class="alert alert-info mb-0 text-end">
                                         <i class="ti ti-calendar"></i>
                                         Report from:
                                         <strong>{{ \Carbon\Carbon::parse($from_date)->format('d M, Y') }}</strong> to

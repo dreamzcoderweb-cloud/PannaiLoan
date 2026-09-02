@@ -323,6 +323,8 @@ class DailyReportController extends Controller
     {
         $from_date = $request->from_date;
         $to_date = $request->to_date;
+        $branch_id = $request->branch_id;
+        $branches = Branch::all();
 
         $query = LoanAssign::with(['client_name', 'loan', 'branches', 'routes', 'employee'])
         ->orderBy('id', 'desc');
@@ -332,13 +334,17 @@ class DailyReportController extends Controller
                 ->whereDate('created_at', '<=', $to_date);
         }
 
+        if ($branch_id) {
+            $query->where('branch_id', $branch_id);
+        }
+
         $loanAssignments = $query->get();
 
         if ($request->ajax()) {
-            return view('Admin.Report.partials.loan_table', compact('loanAssignments', 'from_date', 'to_date'))->render();
+            return view('Admin.Report.partials.loan_table', compact('loanAssignments', 'from_date', 'to_date', 'branch_id'))->render();
         }
 
-        return view('Admin.Report.loan_collection', compact('loanAssignments', 'from_date', 'to_date'));
+        return view('Admin.Report.loan_collection', compact('loanAssignments', 'from_date', 'to_date', 'branches', 'branch_id'));
     }
 
     public function total()
