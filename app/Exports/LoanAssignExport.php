@@ -70,6 +70,11 @@ class LoanAssignExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             $remainingPayable = $loanAssign->latestEmiCollection->latestDetail->remaining_payable_amount ?? '----';
         }
 
+        $documentCharges = match ($loanAssign->collection_type_id) {
+            3 => ($loanAssign->document_charges !== null ? $loanAssign->document_charges : '0.00'),
+            default => '---'
+        };
+
         return [
             $loanAssign->id,
             $loanAssign->client_name->name ?? '---',
@@ -77,6 +82,7 @@ class LoanAssignExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             $loanAssign->loan->loan_name ?? '---',
             $loanAssign->int->interest_id ?? '---',
             $collectionType,
+            $documentCharges,
             $emiAmount,
             $loanAssign->total_payableamt ?? '---',
             $remainingPayable,
@@ -96,6 +102,7 @@ class LoanAssignExport implements FromQuery, WithHeadings, WithMapping, ShouldAu
             'Loan Name',
             'Loan Interest',
             'Loan Collection Type',
+            'Document Charges',
             'EMI Amount',
             'Total Payable Amount',
             'Remaining Amount',

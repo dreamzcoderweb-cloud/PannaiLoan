@@ -375,6 +375,17 @@
                                 @enderror
                             </div>
                         </div>
+
+                        <div id="documentcharges_div" class="row mb-3 form-group" style="display: none;">
+                            <label class="col-lg-3 form-label">Document Charges <span class="text-danger">*</span></label>
+                            <div class="col-lg-9">
+                                <input type="number" step="0.01" name="document_charges" id="document_charges" class="form-control" readonly value="{{ old('document_charges') }}">
+                                <div class="error-container" id="document_charges_error"></div>
+                                @error('document_charges')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
                         
                         <div id="totaldistub_div" class="row mb-3 form-group">
                             <label class="col-lg-3 form-label">Total Distribution  <span class="text-danger">*</span></label>
@@ -568,6 +579,7 @@ $(document).ready(function () {
     $('#monthly_div').hide();
     $('#loan_tenure_div').show();
     $('#monthlyemi_div').hide();
+    $('#documentcharges_div').hide();
     $('#dailyemi_div').hide();
     $('#weeklyemi_div').hide();
     $('#totaldistub_div').hide();

@@ -33,6 +33,7 @@ class LoanAssign extends Model
         'monthly_emi',
         'daily_emi',
         'weekly_emi',
+        'document_charges',
         'total_distribution',
         'total_interest',
         'total_payableamt',

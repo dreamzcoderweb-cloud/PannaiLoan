@@ -125,10 +125,12 @@ class LoanAssignController extends Controller
                 'monthly_emi' => 'required|numeric',
                 'total_interest' => 'required|numeric',
                 'total_payableamt' => 'required|numeric',
+                'document_charges' => 'required|numeric|min:0',
             ];
             $collectionSpecificAttributes = [
                 'monthlydue_date' => 'Monthly Due Date',
                 'monthly_emi' => 'Monthly EMI',
+                'document_charges' => 'Document Charges',
             ];
         }
 
@@ -161,6 +163,7 @@ class LoanAssignController extends Controller
                 'daily_emi' => $request->daily_emi,
                 'weekly_emi' => $request->weekly_emi,
                 'monthly_emi' => $request->monthly_emi,
+                'document_charges' => $request->collection_type_id == 3 ? $request->document_charges : null,
                 'total_distribution' => $request->total_distribution,
                 'total_interest' => $request->total_interest,
                 'total_payableamt' => $request->total_payableamt,
@@ -263,7 +266,9 @@ class LoanAssignController extends Controller
         'city'       => 'required',
         'pincode'    => 'required',
         'branch_id'  => 'required',
-        'route_id'   => 'required'
+        'route_id'   => 'required',
+        'interest_id' => 'nullable',
+        'document_charges' => 'nullable|numeric',
     ], [
         'address.required' => 'Address is required',
         'phone.required'   => 'Phone Number is required',
@@ -275,19 +280,46 @@ class LoanAssignController extends Controller
 
     $item = LoanAssign::findOrFail($id);
 
-    $item->update([
+    $updateData = [
         'client_name' => $request->client_name,
         'address'     => $request->address,
         'phone'       => $request->phone,
         'city'        => $request->city,
         'pincode'     => $request->pincode,
         'branch_id'   => $request->branch_id,
-        'route_id'    => $request->route_id, // fixed
-    ]);
+        'route_id'    => $request->route_id,
+    ];
+
+    if ($request->filled('interest_id')) {
+        $updateData['interest_id'] = $request->interest_id;
+    }
+    if ($request->has('document_charges')) {
+        $updateData['document_charges'] = $request->document_charges;
+    }
+    if ($request->filled('monthly_emi')) {
+        $updateData['monthly_emi'] = $request->monthly_emi;
+    }
+    if ($request->filled('daily_emi')) {
+        $updateData['daily_emi'] = $request->daily_emi;
+    }
+    if ($request->filled('weekly_emi')) {
+        $updateData['weekly_emi'] = $request->weekly_emi;
+    }
+    if ($request->filled('total_distribution')) {
+        $updateData['total_distribution'] = $request->total_distribution;
+    }
+    if ($request->filled('total_interest')) {
+        $updateData['total_interest'] = $request->total_interest;
+    }
+    if ($request->filled('total_payableamt')) {
+        $updateData['total_payableamt'] = $request->total_payableamt;
+    }
+
+    $item->update($updateData);
 
     return redirect()->route('admin.loan-assign-list')
                      ->with('success', 'Loan Assign updated successfully');
-}
+   }
     public function exportExcel(Request $request)
     {
         $searchTerm = $request->search;

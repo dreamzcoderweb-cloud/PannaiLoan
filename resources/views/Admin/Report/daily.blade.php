@@ -313,6 +313,8 @@
      $summary->total_loan = $totalLoansTodayCount;
      $summary->total_loanamount = $totalLoanAmountToday;
     $summary->expense_amount_currentdate = $totalExpenses;
+    $summary->md_fund_in = $md_fund_in;
+    $summary->md_fund_out = $md_fund_out;
     $summary->final_balance_amount = $finalbalanceamt;
 
     $summary->save();
@@ -536,6 +538,8 @@
                                     'Total Loan: {{ $totalLoansTodayCount ?? 0 }}\n' +
                                     'Total Loan Amount: ₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}\n\n' +
                                     'Expenses Amount Current Day ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($totalExpenses ?? 0, 2) }}\n\n' +
+                                    'MD Fund In: ₹{{ number_format($md_fund_in ?? 0, 2) }}\n' +
+                                    'MD Fund Out: ₹{{ number_format($md_fund_out ?? 0, 2) }}\n\n' +
                                     'Final Balance Amount: ₹{{ number_format($finalbalanceamt ?? 0, 2) }}';
                             }
                         },
@@ -562,6 +566,8 @@
                                     'Total Loan: {{ $totalLoansTodayCount ?? 0 }}\n' +
                                     'Total Loan Amount: ₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}\n\n' +
                                     'Expenses Amount Current Day ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($totalExpenses ?? 0, 2) }}\n\n' +
+                                    'MD Fund In: ₹{{ number_format($md_fund_in ?? 0, 2) }}\n' +
+                                    'MD Fund Out: ₹{{ number_format($md_fund_out ?? 0, 2) }}\n\n' +
                                     'Final Balance Amount: ₹{{ number_format($finalbalanceamt ?? 0, 2) }}';
                             }
                         },
@@ -609,6 +615,8 @@
                                             ['Total Loan', { text: '{{ $totalLoansTodayCount ?? 0 }}', alignment: 'right' }],
                                             ['Total Loan Amount', { text: '₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}', alignment: 'right' }],
                                             [{ text: 'Expenses Amount Current Day', color: 'red' }, { text: '₹{{ number_format($totalExpenses ?? 0, 2) }}', alignment: 'right', color: 'red' }],
+                                            ['MD Fund In', { text: '₹{{ number_format($md_fund_in ?? 0, 2) }}', alignment: 'right' }],
+                                            ['MD Fund Out', { text: '₹{{ number_format($md_fund_out ?? 0, 2) }}', alignment: 'right' }],
                                             [{ text: 'Final Balance Amount', bold: true, fontSize: 12, fillColor: '#e9ecef' }, { text: '₹{{ number_format($finalbalanceamt ?? 0, 2) }}', alignment: 'right', bold: true, fontSize: 12, fillColor: '#e9ecef' }]
                                         ]
                                     },
@@ -627,6 +635,20 @@
                                 columns: ':visible'
                             },
                             customize: function (win) {
+                                var formatCurrency = function (val) {
+                                    return '₹' + toNumber(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                };
+
+                                var printPrevPaid = formatCurrency($('input[name="previous_total_paidamount"]').val());
+                                var printCurrPaid = formatCurrency($('input[name="current_total_paidamount"]').val());
+                                var printTotalAmt = formatCurrency($('input[name="total_amount"]').val());
+                                var printTotalLoan = $('input[name="total_loan"]').val() || '0';
+                                var printTotalLoanAmt = formatCurrency($('input[name="total_loanamount"]').val());
+                                var printExpenses = formatCurrency($('input[name="expense_amount_currentdate"]').val());
+                                var printMdFundIn = formatCurrency($('input[name="md_fund_in"]').val());
+                                var printMdFundOut = formatCurrency($('input[name="md_fund_out"]').val());
+                                var printFinalBalance = formatCurrency($('input[name="final_balance_amount"]').val());
+
                                 $(win.document.body)
                                     .css('font-size', '10pt')
                                     .prepend(
@@ -637,13 +659,15 @@
                                         '<div class="row mb-4">' +
                                         '<div class="col-6 offset-3">' +
                                         '<table class="table table-bordered">' +
-                                        '<tr><td><strong>Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}):</strong></td><td class="text-end">₹{{ number_format($previous_totalpaidamount ?? 0, 2) }}</td></tr>' +
-                                        '<tr><td><strong>Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}):</strong></td><td class="text-end">₹{{ number_format($currentday_totalpaidamount ?? 0, 2) }}</td></tr>' +
-                                        '<tr class="table-info"><td><strong>Total Amount:</strong></td><td class="text-end"><strong>₹{{ number_format($totalamt ?? 0, 2) }}</strong></td></tr>' +
-                                        '<tr><td><strong>Total Loan:</strong></td><td class="text-end">{{ $totalLoansTodayCount ?? 0 }}</td></tr>' +
-                                        '<tr><td><strong>Total Loan Amount:</strong></td><td class="text-end">₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}</td></tr>' +
-                                        '<tr><td class="text-danger"><strong>Expenses Amount Current Day:</strong></td><td class="text-end text-danger">₹{{ number_format($totalExpenses ?? 0, 2) }}</td></tr>' +
-                                        '<tr class="table-success"><td><strong style="font-size: 1.2em;">Final Balance Amount:</strong></td><td class="text-end"><strong style="font-size: 1.2em;">₹{{ number_format($finalbalanceamt ?? 0, 2) }}</strong></td></tr>' +
+                                        '<tr><td><strong>Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}):</strong></td><td class="text-end">' + printPrevPaid + '</td></tr>' +
+                                        '<tr><td><strong>Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}):</strong></td><td class="text-end">' + printCurrPaid + '</td></tr>' +
+                                        '<tr class="table-info"><td><strong>Total Amount:</strong></td><td class="text-end"><strong>' + printTotalAmt + '</strong></td></tr>' +
+                                        '<tr><td><strong>Total Loan:</strong></td><td class="text-end">' + printTotalLoan + '</td></tr>' +
+                                        '<tr><td><strong>Total Loan Amount:</strong></td><td class="text-end">' + printTotalLoanAmt + '</td></tr>' +
+                                        '<tr><td class="text-danger"><strong>Expenses Amount Current Day:</strong></td><td class="text-end text-danger">' + printExpenses + '</td></tr>' +
+                                        '<tr><td><strong>MD Fund In:</strong></td><td class="text-end">' + printMdFundIn + '</td></tr>' +
+                                        '<tr><td><strong>MD Fund Out:</strong></td><td class="text-end">' + printMdFundOut + '</td></tr>' +
+                                        '<tr class="table-success"><td><strong style="font-size: 1.2em;">Final Balance Amount:</strong></td><td class="text-end"><strong style="font-size: 1.2em;">' + printFinalBalance + '</strong></td></tr>' +
                                         '</table>' +
                                         '</div>' +
                                         '</div><hr>'

@@ -80,6 +80,7 @@
                 <th>Route</th>
                 <th>Amount</th>
                 <th>Interest</th>
+                <th>Doc Charges</th>
                 <th>Date</th>
             </tr>
         </thead>
@@ -94,6 +95,7 @@
                     <td>{{ $item->routes->route_name ?? 'N/A' }}</td>
                     <td class="text-right">{{ number_format($item->loan_amount ?? 0, 2) }}</td>
                     <td class="text-right">{{ $item->int->interest_id ?? 'N/A' }}%</td>
+                    <td class="text-right">{{ ($item->collection_type_id == 3 && $item->document_charges !== null) ? number_format($item->document_charges, 2) : '---' }}</td>
                     <td>
                         {{ $item->loanassign_date
                             ? \Carbon\Carbon::parse($item->loanassign_date)->format('d-m-Y')
@@ -103,7 +105,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center">No records found</td>
+                    <td colspan="10" class="text-center">No records found</td>
                 </tr>
             @endforelse
         </tbody>

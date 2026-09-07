@@ -138,6 +138,12 @@ function initializeLoanAssignValidation() {
                     return $('#collection_type_id').val() == 3;
                 }
             },
+            document_charges: {
+                required: function (element) {
+                    return $('#collection_type_id').val() == 3;
+                },
+                number: true
+            },
             total_interest: {
                 required: true
             },
@@ -223,6 +229,10 @@ function initializeLoanAssignValidation() {
             },
             monthly_emi: {
                 required: "Monthly EMI is required for Monthly collection type."
+            },
+            document_charges: {
+                required: "Document Charges is required for Monthly collection type.",
+                number: "Please enter a valid amount"
             }
         },
         errorPlacement: function (error, element) {
@@ -282,6 +292,10 @@ function initializeLoanAssignValidation() {
         // Reset all dependent fields if collection type changes
         if (CollectionTypeId != 3) {
             $('input[name="monthlydue_date"]').val('');
+            $('#document_charges').val('');
+            $('#documentcharges_div').hide();
+        } else {
+            $('#documentcharges_div').show();
         }
         if (CollectionTypeId != 2) {
             $('#week_duedays_id').val('');
@@ -321,6 +335,7 @@ function initializeLoanAssignValidation() {
         }
         else if (CollectionTypeId == 3) {
             $('#monthly_div').show();
+            $('#documentcharges_div').show();
             $('#loan_tenure_div').show();
         }
 
@@ -359,6 +374,22 @@ function initializeLoanAssignValidation() {
     // Hide all sections initially
     $('#monthlyemi_div, #weeklyemi_div, #dailyemi_div').hide();
     $('#totalinterest_div, #totalpayable_div, #totaldistub_div').hide();
+
+    // Calculate Document Charges for Monthly Loan
+    if (collectionType == 3) {
+        $('#documentcharges_div').show();
+        if (!isNaN(P) && !isNaN(interestRate)) {
+            // Document Charges = Loan Amount × Selected Interest Percentage / 100
+            let documentCharges = (P * interestRate) / 100;
+            let roundedDocCharges = Math.round(documentCharges * 100) / 100;
+            $("#document_charges").val(roundedDocCharges);
+        } else {
+            $("#document_charges").val('');
+        }
+    } else {
+        $('#documentcharges_div').hide();
+        $("#document_charges").val('');
+    }
 
     // Validate inputs
     if (isNaN(P) || isNaN(N) || !collectionType || isNaN(interestRate)) {
@@ -475,6 +506,7 @@ function initializeLoanAssignValidation() {
         validator.element("#total_interest");
     } else if (collectionType == 3) {
         validator.element("#monthly_emi");
+        validator.element("#document_charges");
         validator.element("#total_interest");
         validator.element("#total_payableamt");
     } else if (collectionType == 1) {
@@ -489,5 +521,8 @@ function initializeLoanAssignValidation() {
 
     // Apply correct interest options on first load as well.
     filterInterestOptionsByCollectionType($("#collection_type_id").val());
+    if ($("#collection_type_id").val() == 3) {
+        $('#documentcharges_div').show();
+    }
 
 }

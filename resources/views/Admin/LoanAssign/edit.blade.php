@@ -162,6 +162,7 @@
                                     <option value="2" {{ old('collection_type_id', $original->collection_type_id) == 2 ? 'selected' : '' }}>Weekly</option>
                                     <option value="3" {{ old('collection_type_id', $original->collection_type_id) == 3 ? 'selected' : '' }}>Monthly</option>
                                 </select>
+                                <input type="hidden" name="collection_type_id" value="{{ $original->collection_type_id }}">
                                 <div class="error-container" id="collection_type_id_error"></div>
                                 @error('collection_type_id')
                                     <small class="text-danger">{{ $message }}</small>
@@ -232,7 +233,7 @@
                             </div>
                         </div>
 
-                        
+
 
                         <div class="row mb-3 form-group" id="loan_tenure_div">
                             <label class="col-lg-3 form-label">Loan tenure (in months)<span class="text-danger">*</span></label>
@@ -285,7 +286,7 @@
                         <div class="row mb-3 form-group">
                             <label class="col-lg-3 form-label">Loan Amount <span class="text-danger">*</span></label>
                             <div class="col-lg-9">
-                                <input type="number" name="loan_amount" id="loan_amount" value="{{ old('loan_amount', $original->loan_amount) }}" class="form-control" readonly>
+                                <input type="number" name="loan_amount" id="loan_amount" value="{{ old('loan_amount', $original->loan_amount) }}" class="form-control">
                                 @error('loan_amount')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -295,7 +296,7 @@
                         <div class="row mb-3 form-group">
                             <label class="col-lg-3 form-label">Interest <span class="text-danger">*</span></label>
                             <div class="col-lg-9">
-                                <select class="form-control select" name="interest_id" id="interest_id" disabled>
+                                <select class="form-control select" name="interest_id" id="interest_id">
                                     <option value="">Select</option>
                                     @foreach ($interests as $item)
                                         <option value="{{ $item->id }}"
@@ -340,6 +341,16 @@
                             <div class="col-lg-9">
                                 <input type="number" name="monthly_emi" id="monthly_emi" class="form-control" readonly value="{{ old('monthly_emi', $original->monthly_emi) }}">
                                 @error('monthly_emi')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div id="documentcharges_div" class="row mb-3 form-group" style="display: none;">
+                            <label class="col-lg-3 form-label">Document Charges <span class="text-danger">*</span></label>
+                            <div class="col-lg-9">
+                                <input type="number" step="0.01" name="document_charges" id="document_charges" class="form-control" readonly value="{{ old('document_charges', $original->document_charges) }}">
+                                @error('document_charges')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
@@ -414,9 +425,8 @@
     let dd = String(selectedDate.getDate()).padStart(2, '0');
 
     let finalDate = `${yyyy}-${mm}-${dd}`;
-    alert(finalDate);
     $("#weeklyemi_date").val(finalDate);
-   
+
 
 });
         // Initialize the validation
@@ -432,9 +442,9 @@
         if (!collectionTypeId) {
             collectionTypeId = "{{ old('collection_type_id', $original->collection_type_id) }}";
         }
-        
+
         console.log("Collection Type ID:", collectionTypeId); // For debugging
-        
+
         // Hide all sections first
         $('#daily_div').hide();
         $('#weekly_div').hide();
@@ -442,10 +452,11 @@
         $('#dailyemi_div').hide();
         $('#weeklyemi_div').hide();
         $('#monthlyemi_div').hide();
+        $('#documentcharges_div').hide();
         $('#totaldistub_div').hide();
         $('#totalinterest_div').hide();
         $('#totalpayable_div').hide();
-        
+
         // Show relevant sections based on collection type
         if(collectionTypeId == 1) {
             // Daily
@@ -466,13 +477,24 @@
             // Monthly
             $('#monthly_div').show();
             $('#monthlyemi_div').show();
+            $('#documentcharges_div').show();
             $('#totalinterest_div').show();
             $('#totalpayable_div').show();
+
+            // Auto-calculate document charges if empty on load
+            if (!$('#document_charges').val() || $('#document_charges').val() == '0') {
+                let P = parseFloat($("#loan_amount").val());
+                let rate = parseFloat($("#interest_id option:selected").data('rate'));
+                if (!isNaN(P) && !isNaN(rate)) {
+                    let docCharges = Math.round((P * rate) / 100 * 100) / 100;
+                    $('#document_charges').val(docCharges);
+                }
+            }
         }
-        
+
         // Always show these sections
         $('#loan_tenure_div').show();
-        
+
         // Trigger validation update if validator exists
         if ($("#loanAssignForm").data('validator')) {
             var validator = $("#loanAssignForm").validate();

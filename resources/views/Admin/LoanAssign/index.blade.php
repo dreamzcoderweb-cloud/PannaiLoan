@@ -54,6 +54,7 @@
                                     <th>Loan Name</th>
                                     <th>Loan Interest</th>
                                     <th>Loan Collection Type</th>
+                                    <th>Document Charges</th>
                                     <th>EMI Amount</th>
                                     <th>Total Payable Amount</th>
                                     <th>Remaining Amount</th>
@@ -81,6 +82,13 @@
                                             Weekly
                                         @elseif ($item->collection_type_id == 3)
                                             Monthly
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($item->collection_type_id == 3 && $item->document_charges !== null)
+                                            ₹{{ number_format($item->document_charges, 2) }}
+                                        @else
+                                            ---
                                         @endif
                                     </td>
                                     <td>

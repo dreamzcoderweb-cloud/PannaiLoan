@@ -668,7 +668,7 @@ class EmiCollectionController extends Controller
         $collectionIds = $getemicollection->pluck('id');
 
         $getemihistory = EmiCollectionDetail::whereIn('emi_collection_id', $collectionIds)
-            ->orderBy('installment_no', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
 
         $totalPaidAmount = (float) $getemihistory->sum('paid_amount');
