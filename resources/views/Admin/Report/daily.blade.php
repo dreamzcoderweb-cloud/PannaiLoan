@@ -531,16 +531,19 @@
                                 $('row c[r^="E"], row c[r^="F"]', sheet).attr('s', '2'); // Format currency columns
                             },
                             messageBottom: function () {
+                                var formatCurrency = function (val) {
+                                    return '₹' + toNumber(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                };
                                 return '\nCollection Summary\n' +
-                                    'Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}): ₹{{ number_format($previous_totalpaidamount ?? 0, 2) }}\n' +
-                                    'Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($currentday_totalpaidamount ?? 0, 2) }}\n' +
-                                    'Total Amount: ₹{{ number_format($totalamt ?? 0, 2) }}\n\n' +
-                                    'Total Loan: {{ $totalLoansTodayCount ?? 0 }}\n' +
-                                    'Total Loan Amount: ₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}\n\n' +
-                                    'Expenses Amount Current Day ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($totalExpenses ?? 0, 2) }}\n\n' +
-                                    'MD Fund In: ₹{{ number_format($md_fund_in ?? 0, 2) }}\n' +
-                                    'MD Fund Out: ₹{{ number_format($md_fund_out ?? 0, 2) }}\n\n' +
-                                    'Final Balance Amount: ₹{{ number_format($finalbalanceamt ?? 0, 2) }}';
+                                    'Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}): ' + formatCurrency($('input[name="previous_total_paidamount"]').val()) + '\n' +
+                                    'Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ' + formatCurrency($('input[name="current_total_paidamount"]').val()) + '\n' +
+                                    'Total Amount: ' + formatCurrency($('input[name="total_amount"]').val()) + '\n\n' +
+                                    'Total Loan: ' + ($('input[name="total_loan"]').val() || '0') + '\n' +
+                                    'Total Loan Amount: ' + formatCurrency($('input[name="total_loanamount"]').val()) + '\n\n' +
+                                    'Expenses Amount Current Day ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ' + formatCurrency($('input[name="expense_amount_currentdate"]').val()) + '\n\n' +
+                                    'MD Fund In: ' + formatCurrency($('input[name="md_fund_in"]').val()) + '\n' +
+                                    'MD Fund Out: ' + formatCurrency($('input[name="md_fund_out"]').val()) + '\n\n' +
+                                    'Final Balance Amount: ' + formatCurrency($('input[name="final_balance_amount"]').val());
                             }
                         },
                         {
@@ -559,16 +562,19 @@
                                 }
                             },
                             messageBottom: function () {
+                                var formatCurrency = function (val) {
+                                    return '₹' + toNumber(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                };
                                 return '\nCollection Summary\n' +
-                                    'Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}): ₹{{ number_format($previous_totalpaidamount ?? 0, 2) }}\n' +
-                                    'Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($currentday_totalpaidamount ?? 0, 2) }}\n' +
-                                    'Total Amount: ₹{{ number_format($totalamt ?? 0, 2) }}\n\n' +
-                                    'Total Loan: {{ $totalLoansTodayCount ?? 0 }}\n' +
-                                    'Total Loan Amount: ₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}\n\n' +
-                                    'Expenses Amount Current Day ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($totalExpenses ?? 0, 2) }}\n\n' +
-                                    'MD Fund In: ₹{{ number_format($md_fund_in ?? 0, 2) }}\n' +
-                                    'MD Fund Out: ₹{{ number_format($md_fund_out ?? 0, 2) }}\n\n' +
-                                    'Final Balance Amount: ₹{{ number_format($finalbalanceamt ?? 0, 2) }}';
+                                    'Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}): ' + formatCurrency($('input[name="previous_total_paidamount"]').val()) + '\n' +
+                                    'Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ' + formatCurrency($('input[name="current_total_paidamount"]').val()) + '\n' +
+                                    'Total Amount: ' + formatCurrency($('input[name="total_amount"]').val()) + '\n\n' +
+                                    'Total Loan: ' + ($('input[name="total_loan"]').val() || '0') + '\n' +
+                                    'Total Loan Amount: ' + formatCurrency($('input[name="total_loanamount"]').val()) + '\n\n' +
+                                    'Expenses Amount Current Day ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ' + formatCurrency($('input[name="expense_amount_currentdate"]').val()) + '\n\n' +
+                                    'MD Fund In: ' + formatCurrency($('input[name="md_fund_in"]').val()) + '\n' +
+                                    'MD Fund Out: ' + formatCurrency($('input[name="md_fund_out"]').val()) + '\n\n' +
+                                    'Final Balance Amount: ' + formatCurrency($('input[name="final_balance_amount"]').val());
                             }
                         },
                         {
@@ -581,6 +587,20 @@
                                 columns: ':visible'
                             },
                             customize: function (doc) {
+                                var formatCurrency = function (val) {
+                                    return '₹' + toNumber(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                };
+
+                                var pdfPrevPaid = formatCurrency($('input[name="previous_total_paidamount"]').val());
+                                var pdfCurrPaid = formatCurrency($('input[name="current_total_paidamount"]').val());
+                                var pdfTotalAmt = formatCurrency($('input[name="total_amount"]').val());
+                                var pdfTotalLoan = $('input[name="total_loan"]').val() || '0';
+                                var pdfTotalLoanAmt = formatCurrency($('input[name="total_loanamount"]').val());
+                                var pdfExpenses = formatCurrency($('input[name="expense_amount_currentdate"]').val());
+                                var pdfMdFundIn = formatCurrency($('input[name="md_fund_in"]').val());
+                                var pdfMdFundOut = formatCurrency($('input[name="md_fund_out"]').val());
+                                var pdfFinalBalance = formatCurrency($('input[name="final_balance_amount"]').val());
+
                                 doc.content[1].table.widths =
                                     Array(doc.content[1].table.body[0].length).fill('*');
                                 doc.styles.tableHeader.alignment = 'center';
@@ -609,15 +629,15 @@
                                         widths: ['*', '*'],
                                         body: [
                                             [{ text: 'Collection Summary', colSpan: 2, alignment: 'center', bold: true, fillColor: '#f8f9fa' }, {}],
-                                            ['Previous Total Paid Amount ({{ $previousDateLabel ?? "" }})', { text: '₹{{ number_format($previous_totalpaidamount ?? 0, 2) }}', alignment: 'right' }],
-                                            ['Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }})', { text: '₹{{ number_format($currentday_totalpaidamount ?? 0, 2) }}', alignment: 'right' }],
-                                            [{ text: 'Total Amount', bold: true }, { text: '₹{{ number_format($totalamt ?? 0, 2) }}', alignment: 'right', bold: true }],
-                                            ['Total Loan', { text: '{{ $totalLoansTodayCount ?? 0 }}', alignment: 'right' }],
-                                            ['Total Loan Amount', { text: '₹{{ number_format($totalLoanAmountToday ?? 0, 2) }}', alignment: 'right' }],
-                                            [{ text: 'Expenses Amount Current Day', color: 'red' }, { text: '₹{{ number_format($totalExpenses ?? 0, 2) }}', alignment: 'right', color: 'red' }],
-                                            ['MD Fund In', { text: '₹{{ number_format($md_fund_in ?? 0, 2) }}', alignment: 'right' }],
-                                            ['MD Fund Out', { text: '₹{{ number_format($md_fund_out ?? 0, 2) }}', alignment: 'right' }],
-                                            [{ text: 'Final Balance Amount', bold: true, fontSize: 12, fillColor: '#e9ecef' }, { text: '₹{{ number_format($finalbalanceamt ?? 0, 2) }}', alignment: 'right', bold: true, fontSize: 12, fillColor: '#e9ecef' }]
+                                            ['Previous Total Paid Amount ({{ $previousDateLabel ?? "" }})', { text: pdfPrevPaid, alignment: 'right' }],
+                                            ['Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }})', { text: pdfCurrPaid, alignment: 'right' }],
+                                            [{ text: 'Total Amount', bold: true }, { text: pdfTotalAmt, alignment: 'right', bold: true }],
+                                            ['Total Loan', { text: pdfTotalLoan, alignment: 'right' }],
+                                            ['Total Loan Amount', { text: pdfTotalLoanAmt, alignment: 'right' }],
+                                            [{ text: 'Expenses Amount Current Day', color: 'red' }, { text: pdfExpenses, alignment: 'right', color: 'red' }],
+                                            ['MD Fund In', { text: pdfMdFundIn, alignment: 'right' }],
+                                            ['MD Fund Out', { text: pdfMdFundOut, alignment: 'right' }],
+                                            [{ text: 'Final Balance Amount', bold: true, fontSize: 12, fillColor: '#e9ecef' }, { text: pdfFinalBalance, alignment: 'right', bold: true, fontSize: 12, fillColor: '#e9ecef' }]
                                         ]
                                     },
                                     margin: [0, 20, 0, 0]
