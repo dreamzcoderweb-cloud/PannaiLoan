@@ -530,8 +530,8 @@
                                 var sheet = xlsx.xl.worksheets['sheet1.xml'];
                                 $('row c[r^="E"], row c[r^="F"]', sheet).attr('s', '2'); // Format currency columns
                             },
-                            messageTop: function () {
-                                return 'Collection Summary\n' +
+                            messageBottom: function () {
+                                return '\nCollection Summary\n' +
                                     'Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}): ₹{{ number_format($previous_totalpaidamount ?? 0, 2) }}\n' +
                                     'Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($currentday_totalpaidamount ?? 0, 2) }}\n' +
                                     'Total Amount: ₹{{ number_format($totalamt ?? 0, 2) }}\n\n' +
@@ -558,8 +558,8 @@
                                     }
                                 }
                             },
-                            messageTop: function () {
-                                return 'Collection Summary\n' +
+                            messageBottom: function () {
+                                return '\nCollection Summary\n' +
                                     'Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}): ₹{{ number_format($previous_totalpaidamount ?? 0, 2) }}\n' +
                                     'Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}): ₹{{ number_format($currentday_totalpaidamount ?? 0, 2) }}\n' +
                                     'Total Amount: ₹{{ number_format($totalamt ?? 0, 2) }}\n\n' +
@@ -603,7 +603,7 @@
                                 // Bold the total amount cell
                                 footerRow[5].bold = true;
 
-                                // Add Summary Table to PDF
+                                // Add Summary Table to bottom of PDF (last page)
                                 var summaryTable = {
                                     table: {
                                         widths: ['*', '*'],
@@ -620,9 +620,9 @@
                                             [{ text: 'Final Balance Amount', bold: true, fontSize: 12, fillColor: '#e9ecef' }, { text: '₹{{ number_format($finalbalanceamt ?? 0, 2) }}', alignment: 'right', bold: true, fontSize: 12, fillColor: '#e9ecef' }]
                                         ]
                                     },
-                                    margin: [0, 0, 0, 20]
+                                    margin: [0, 20, 0, 0]
                                 };
-                                doc.content.splice(1, 0, summaryTable);
+                                doc.content.push(summaryTable);
                             }
                         },
                         {
@@ -655,21 +655,6 @@
                                         '<div class="text-center">' +
                                         '<h2>Daily EMI Collection Report</h2>' +
                                         '<h4>Date: {{ ($selectedDate ?? null) ? \Carbon\Carbon::parse($selectedDate)->format("d M, Y") : date("d M, Y") }}</h4>' +
-                                        '</div><hr>' +
-                                        '<div class="row mb-4">' +
-                                        '<div class="col-6 offset-3">' +
-                                        '<table class="table table-bordered">' +
-                                        '<tr><td><strong>Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}):</strong></td><td class="text-end">' + printPrevPaid + '</td></tr>' +
-                                        '<tr><td><strong>Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}):</strong></td><td class="text-end">' + printCurrPaid + '</td></tr>' +
-                                        '<tr class="table-info"><td><strong>Total Amount:</strong></td><td class="text-end"><strong>' + printTotalAmt + '</strong></td></tr>' +
-                                        '<tr><td><strong>Total Loan:</strong></td><td class="text-end">' + printTotalLoan + '</td></tr>' +
-                                        '<tr><td><strong>Total Loan Amount:</strong></td><td class="text-end">' + printTotalLoanAmt + '</td></tr>' +
-                                        '<tr><td class="text-danger"><strong>Expenses Amount Current Day:</strong></td><td class="text-end text-danger">' + printExpenses + '</td></tr>' +
-                                        '<tr><td><strong>MD Fund In:</strong></td><td class="text-end">' + printMdFundIn + '</td></tr>' +
-                                        '<tr><td><strong>MD Fund Out:</strong></td><td class="text-end">' + printMdFundOut + '</td></tr>' +
-                                        '<tr class="table-success"><td><strong style="font-size: 1.2em;">Final Balance Amount:</strong></td><td class="text-end"><strong style="font-size: 1.2em;">' + printFinalBalance + '</strong></td></tr>' +
-                                        '</table>' +
-                                        '</div>' +
                                         '</div><hr>'
                                     );
 
@@ -699,6 +684,27 @@
                                         }
                                     }
                                 });
+
+                                // Append Summary Table to bottom of print view (last page)
+                                $(win.document.body).append(
+                                    '<hr>' +
+                                    '<div class="row mt-4" style="page-break-inside: avoid; break-inside: avoid;">' +
+                                    '<div class="col-6 offset-3">' +
+                                    '<table class="table table-bordered">' +
+                                    '<tr><th colspan="2" class="text-center" style="background-color: #f8f9fa;"><strong>Collection Summary</strong></th></tr>' +
+                                    '<tr><td><strong>Previous Total Paid Amount ({{ $previousDateLabel ?? "" }}):</strong></td><td class="text-end">' + printPrevPaid + '</td></tr>' +
+                                    '<tr><td><strong>Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format("d-m-Y") : date("d-m-Y") }}):</strong></td><td class="text-end">' + printCurrPaid + '</td></tr>' +
+                                    '<tr class="table-info"><td><strong>Total Amount:</strong></td><td class="text-end"><strong>' + printTotalAmt + '</strong></td></tr>' +
+                                    '<tr><td><strong>Total Loan:</strong></td><td class="text-end">' + printTotalLoan + '</td></tr>' +
+                                    '<tr><td><strong>Total Loan Amount:</strong></td><td class="text-end">' + printTotalLoanAmt + '</td></tr>' +
+                                    '<tr><td class="text-danger"><strong>Expenses Amount Current Day:</strong></td><td class="text-end text-danger">' + printExpenses + '</td></tr>' +
+                                    '<tr><td><strong>MD Fund In:</strong></td><td class="text-end">' + printMdFundIn + '</td></tr>' +
+                                    '<tr><td><strong>MD Fund Out:</strong></td><td class="text-end">' + printMdFundOut + '</td></tr>' +
+                                    '<tr class="table-success"><td><strong style="font-size: 1.2em;">Final Balance Amount:</strong></td><td class="text-end"><strong style="font-size: 1.2em;">' + printFinalBalance + '</strong></td></tr>' +
+                                    '</table>' +
+                                    '</div>' +
+                                    '</div>'
+                                );
                             }
                         }
                     ],
