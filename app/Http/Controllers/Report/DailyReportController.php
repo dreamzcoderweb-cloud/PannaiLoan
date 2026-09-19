@@ -41,8 +41,38 @@ class DailyReportController extends Controller
         $today = Carbon::today()->format('Y-m-d');
         $selectedDate = $request->monthlydue_date ?? $today;
         $date = Carbon::parse($selectedDate);
-        // Previous date variable
-        $previousDate = Carbon::parse($date)->subDay();
+
+        // Find existing summary for the selected date (if any)
+        $existingSummary = CollectionSummary::whereDate(
+            'current_date',
+            $date->toDateString()
+        )->where(function ($q) {
+            $q->whereNull('report_type')->orWhere('report_type', 'daily');
+        })->first();
+
+        // Find the latest previous daily collection summary before the selected date (e.g. Saturday if today is Monday)
+        $previousSummary = CollectionSummary::whereDate('current_date', '<', $date->toDateString())
+            ->where(function ($q) {
+                $q->whereNull('report_type')->orWhere('report_type', 'daily');
+            })
+            ->orderBy('current_date', 'desc')
+            ->first();
+
+        if ($existingSummary && $existingSummary->previous_total_paidamount > 0) {
+            $previousFinalBalance = (float) $existingSummary->previous_total_paidamount;
+            $previousDate = $existingSummary->previous_date
+                ? Carbon::parse($existingSummary->previous_date)
+                : ($previousSummary ? Carbon::parse($previousSummary->current_date) : $date->copy()->subDay());
+        } elseif ($previousSummary) {
+            $previousFinalBalance = (float) $previousSummary->final_balance_amount;
+            $previousDate = Carbon::parse($previousSummary->current_date);
+        } else {
+            $previousDate = $date->copy()->subDay();
+            $previousFinalBalance = 0;
+        }
+
+        $previousDateLabel = $previousDate->format('d-m-Y');
+        $previousDateYmd = $previousDate->toDateString();
         // Get EMI collections for the selected date (for individual records table)
         $emiCollections = Emicollection::with([
             'clientname','branch','routename',
@@ -129,7 +159,6 @@ class DailyReportController extends Controller
 
         // Previous Balance = (Total Money In) - (Total Money Out)
         $previousCollection = $totalPrevIn - $totalPrevLoans - $totalPrevExpenses;
-        $previousDateLabel = $date->copy()->subDay()->format('d-m-Y');
 
         // 3. Total Amount (Carry Forward + Today's Collection)
         $totalAmount = $previousCollection + $currentCollection;
@@ -204,25 +233,8 @@ class DailyReportController extends Controller
             $previous_totalPaidAmount += $collection->details->sum('paid_amount');
         }
         //dd($previous_totalPaidAmount);
-        $previousFinalBalance = CollectionSummary::whereDate('current_date', $previousDate->toDateString())
-            ->value('final_balance_amount') ?? 0;
-        // dd($previousFinalBalance);
-        $existingSummary = CollectionSummary::whereDate(
-            'current_date',
-            $date->toDateString()
-        )->first();
         $md_fund_in = $existingSummary->md_fund_in ?? 0;
         $md_fund_out = $existingSummary->md_fund_out ?? 0;
-        /*
-        |--------------------------------------------------------------------------
-        | Previous Date Final Balance Amount
-        |--------------------------------------------------------------------------
-        */
-
-        $previousFinalBalance = CollectionSummary::whereDate(
-            'current_date',
-            $previousDate->toDateString()
-        )->value('final_balance_amount') ?? 0;
 
         /*
         |--------------------------------------------------------------------------
@@ -240,7 +252,7 @@ class DailyReportController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $totalAmount = $previousFinalBalance + $currentTotalPaidAmount;
+        $totalAmount = $previousFinalBalance + $currentTotalPaidAmount + $md_fund_in;
 
         /*
         |--------------------------------------------------------------------------
@@ -248,7 +260,7 @@ class DailyReportController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $finalBalanceAmount = $totalAmount - $totalLoanAmountToday - $totalExpenses;
+        $finalBalanceAmount = $totalAmount - $totalLoanAmountToday - $totalExpenses - $md_fund_out;
 
         /*
         |--------------------------------------------------------------------------
@@ -258,7 +270,7 @@ class DailyReportController extends Controller
 
         $collectionSummaryForm = [
 
-            'previous_date' => $previousDate->toDateString(),
+            'previous_date' => $previousDateYmd,
 
             'previous_total_paidamount' => $previousFinalBalance,
 
@@ -287,7 +299,9 @@ class DailyReportController extends Controller
             'md_fund_in',
             'md_fund_out',
             'previousCollection',
+            'previousDate',
             'previousDateLabel',
+            'previousDateYmd',
             'currentCollection',
             'totalAmount',
             'totalExpenses',
@@ -339,7 +353,7 @@ class DailyReportController extends Controller
         }
 
         $loanAssignments = $query->get();
-
+       
         if ($request->ajax()) {
             return view('Admin.Report.partials.loan_table', compact('loanAssignments', 'from_date', 'to_date', 'branch_id'))->render();
         }

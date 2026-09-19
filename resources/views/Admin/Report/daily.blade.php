@@ -118,16 +118,22 @@
                                             : ($today ?? \Carbon\Carbon::today()->toDateString());
 
                                         $currentDateObj = \Carbon\Carbon::parse($selectedDateYmd);
-                                        $previousDateYmd = $currentDateObj->copy()->subDay()->toDateString();
+                                        $previousDateYmd = isset($previousDateYmd) && !empty($previousDateYmd)
+                                            ? $previousDateYmd
+                                            : (isset($existingSummary) && $existingSummary->previous_date 
+                                                ? \Carbon\Carbon::parse($existingSummary->previous_date)->toDateString() 
+                                                : $currentDateObj->copy()->subDay()->toDateString());
 
                                         // Requirement: when selecting current date, show previous date final balance as opening balance
-                                        $previous_totalpaidamount = $previousFinalBalance ?? 0;
+                                        $previous_totalpaidamount = isset($existingSummary) && $existingSummary->previous_total_paidamount > 0
+                                            ? (float) $existingSummary->previous_total_paidamount
+                                            : ($previousFinalBalance ?? 0);
 
                                         // Current day paid amount should always be derived from the table total;
                                         // saved summary values can be stale if more payments are added later.
                                         $currentday_totalpaidamount = $totalPaidAmount ?? 0;
 
-                                        $totalamt = $previous_totalpaidamount + $currentday_totalpaidamount + $md_fund_in ;
+                                        $totalamt = $previous_totalpaidamount + $currentday_totalpaidamount + ($md_fund_in ?? 0);
                                         $finalbalanceamt = $totalamt - ($totalLoanAmountToday ?? 0) - ($totalExpenses ?? 0) - ($md_fund_out ?? 0);
                                     @endphp
                                     @foreach($emiCollections as $index => $collection)
@@ -225,7 +231,7 @@
                                                 <div class="col-md-6">
                                                     <label class="form-label mb-1">Previous Date</label>
                                                     <input type="date" name="previous_date" class="form-control"
-                                                        value="{{ old('previous_date', $previousDateYmd) }}">
+                                                        value="{{ old('previous_date', isset($existingSummary) && $existingSummary->previous_date ? \Carbon\Carbon::parse($existingSummary->previous_date)->format('Y-m-d') : $previousDateYmd) }}">
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label mb-1">Current Date</label>
@@ -236,7 +242,7 @@
                                                 <div class="col-md-6">
                                                     <label class="form-label mb-1">Previous Total Paid Amount ({{ $previousDateLabel ?? '' }})</label>
                                                     <input type="number" step="0.01" name="previous_total_paidamount" class="form-control"
-                                                       value="{{ old('previous_total_paidamount', isset($existingSummary) ? $existingSummary->previous_total_paidamount : ($previous_totalpaidamount ?? 0)) }}" required>
+                                                       value="{{ old('previous_total_paidamount', isset($existingSummary) && $existingSummary->previous_total_paidamount > 0 ? $existingSummary->previous_total_paidamount : ($previous_totalpaidamount ?? 0)) }}" required>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label mb-1">Current Day Total Paid Amount ({{ isset($selectedDate) ? \Carbon\Carbon::parse($selectedDate)->format('d-m-Y') : date('d-m-Y') }})</label>

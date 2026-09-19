@@ -45,6 +45,7 @@
             </thead>
             <tbody>
                 @php $totalLoanAmount = 0; @endphp
+
                 @foreach($loanAssignments as $index => $loan)
 
                     @php
@@ -53,24 +54,36 @@
                         if ($loan->collection_type_id == 2) {
                             $finalamt = $loan->total_distribution ?? 0;
                         } elseif ($loan->collection_type_id == 3) {
-                            $finalamt = $loan->loan_amount ?? 0;
+                            $loanAmount = $loan->loan_amount ?? 0;
+                            $documentCharges = $loan->document_charges ?? 0;
+
+                            $finalamt = $loanAmount - $documentCharges;
                         }
+
                         $totalLoanAmount += $finalamt;
                     @endphp
 
                     <tr>
                         <td>{{ $index + 1 }}</td>
+
                         <td>
                             <strong>{{ $loan->client_name->name ?? 'N/A' }}</strong>
                             <br>
-                            <small class="text-muted">{{ $loan->phone ?? 'N/A' }}</small>
+                            <small class="text-muted">
+                                {{ $loan->phone ?? 'N/A' }}
+                            </small>
                         </td>
+
                         <td>{{ $loan->employee->name ?? 'N/A' }}</td>
+
                         <td>{{ $loan->loan->loan_name ?? 'N/A' }}</td>
+
                         <td data-order="{{ $finalamt }}" class="text-end">
                             ₹{{ number_format($finalamt, 2) }}
                         </td>
+
                         <td>{{ $loan->branches->branch_name ?? 'N/A' }}</td>
+
                         <td>{{ $loan->routes->route_name ?? 'N/A' }}</td>
                     </tr>
 

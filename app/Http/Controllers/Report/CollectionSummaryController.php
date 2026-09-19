@@ -26,6 +26,7 @@ class CollectionSummaryController extends Controller
                 'md_fund_in' => ['nullable', 'numeric'],
                 'md_fund_out' => ['nullable', 'numeric'],
             ]);
+            $data['report_type'] = 'daily';
             CollectionSummary::updateOrCreate(
                 ['current_date' => $data['current_date']],
                 $data
