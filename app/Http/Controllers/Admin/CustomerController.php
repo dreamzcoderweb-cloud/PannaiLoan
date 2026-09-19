@@ -69,15 +69,51 @@ class CustomerController extends Controller
         $branches = Branch::all();
         $branch_id = $request->branch_id;
 
-        $query = Customer::with(['branch', 'route', 'loanAssign.emiCollections.latestDetail']);
+        if ($request->ajax()) {
+            $query = Customer::with(['branch', 'route', 'loanAssign.latestEmiCollection.latestDetail']);
 
-        if ($branch_id) {
-            $query->where('branch_id', $branch_id);
+            if ($request->filled('branch_id')) {
+                $query->where('branch_id', $request->branch_id);
+            }
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('collection_type', function ($row) {
+                    $type = $row->loanAssign->collection_type_id ?? null;
+                    return match ($type) {
+                        1 => 'Daily',
+                        2 => 'Weekly',
+                        3 => 'Monthly',
+                        default => '---',
+                    };
+                })
+                ->addColumn('total_payable', function ($row) {
+                    return $row->loanAssign->total_payableamt ?? '---';
+                })
+                ->addColumn('remaining_amount', function ($row) {
+                    return $row->loanAssign?->latestEmiCollection?->latestDetail?->remaining_payable_amount ?? '---';
+                })
+                ->addColumn('branch_name', function ($row) {
+                    return $row->branch->branch_name ?? '---';
+                })
+                ->addColumn('route_name', function ($row) {
+                    return $row->route->route_name ?? '---';
+                })
+                ->addColumn('action', function ($row) {
+                    $actions = '';
+                    if (auth()->user() && auth()->user()->can('customer-view')) {
+                        $actions .= '<a href="' . route('admin.customer-view', $row->id) . '" class="btn btn-success btn-sm me-1">View</a>';
+                    }
+                    if (auth()->user() && auth()->user()->can('customer-edit')) {
+                        $actions .= '<a href="' . route('admin.customer-edit', $row->id) . '" class="btn btn-warning btn-sm">Edit</a>';
+                    }
+                    return $actions;
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
-        $data = $query->get();
-
-        return view('Admin.Customer.index', compact('data', 'branches', 'branch_id'));
+        return view('Admin.Customer.index', compact('branches', 'branch_id'));
     }
     public function edit($id)
     {

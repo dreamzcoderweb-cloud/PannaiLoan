@@ -335,12 +335,26 @@ class DailyReportController extends Controller
 
     public function loanFilter(Request $request)
     {
-        $from_date = $request->from_date;
-        $to_date = $request->to_date;
-        $branch_id = $request->branch_id;
         $branches = Branch::all();
+        $today = Carbon::today()->format('Y-m-d');
+        $startOfMonth = Carbon::today()->startOfMonth()->format('Y-m-d');
 
-        $query = LoanAssign::with(['client_name', 'loan', 'branches', 'routes', 'employee'])
+        $from_date = $request->input('from_date', $startOfMonth);
+        $to_date = $request->input('to_date', $today);
+        $branch_id = $request->branch_id;
+
+        $query = LoanAssign::with([
+            'client_name:id,name',
+            'loan:id,loan_name',
+            'branches:id,branch_name',
+            'routes:id,route_name',
+            'employee:id,name,route_id'
+        ])
+        ->select([
+            'id', 'client_id', 'phone', 'loan_type_id', 'collection_type_id',
+            'total_distribution', 'loan_amount', 'document_charges',
+            'branch_id', 'route_id', 'created_at'
+        ])
         ->orderBy('id', 'desc');
 
         if ($from_date && $to_date) {

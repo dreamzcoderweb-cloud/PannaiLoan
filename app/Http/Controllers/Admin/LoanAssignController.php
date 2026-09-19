@@ -188,15 +188,68 @@ class LoanAssignController extends Controller
         $branches = Branch::all();
         $branch_id = $request->branch_id;
 
-        $query = LoanAssign::with('int', 'loan', 'branches', 'routes', 'client_name', 'latestEmiCollection.latestDetail', 'emiCollections');
+        if ($request->ajax()) {
+            $query = LoanAssign::with(['int', 'loan', 'branches', 'routes', 'client_name', 'latestEmiCollection.latestDetail']);
 
-        if ($branch_id) {
-            $query->where('branch_id', $branch_id);
+            if ($request->filled('branch_id')) {
+                $query->where('branch_id', $request->branch_id);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('client_name', fn($item) => $item->client_name->name ?? '---')
+                ->addColumn('phone', fn($item) => $item->phone ?? '---')
+                ->addColumn('loan_name', fn($item) => $item->loan->loan_name ?? '---')
+                ->addColumn('interest_rate', fn($item) => $item->int->interest_id ?? '---')
+                ->addColumn('collection_type', function ($item) {
+                    return match ($item->collection_type_id) {
+                        1 => 'Daily',
+                        2 => 'Weekly',
+                        3 => 'Monthly',
+                        default => '---',
+                    };
+                })
+                ->addColumn('document_charges', function ($item) {
+                    if ($item->collection_type_id == 3 && $item->document_charges !== null) {
+                        return '₹' . number_format($item->document_charges, 2);
+                    }
+                    return '---';
+                })
+                ->addColumn('emi_amount', function ($item) {
+                    return match ($item->collection_type_id) {
+                        1 => $item->daily_emi,
+                        2 => $item->weekly_emi,
+                        3 => $item->monthly_emi,
+                        default => '---',
+                    };
+                })
+                ->addColumn('total_payable', function ($item) {
+                    return $item->collection_type_id == 2 ? $item->total_distribution : $item->total_payableamt;
+                })
+                ->addColumn('remaining_amount', function ($item) {
+                    return optional($item->latestEmiCollection)->latestDetail->remaining_payable_amount ?? '----';
+                })
+                ->addColumn('branch_name', fn($item) => $item->branches->branch_name ?? '---')
+                ->addColumn('route_name', fn($item) => $item->routes->route_name ?? '---')
+                ->addColumn('loan_amount', fn($item) => $item->loan_amount ?? '---')
+                ->addColumn('action', function ($item) {
+                    $actions = '';
+                    if (optional($item->latestEmiCollection)->latestDetail) {
+                        $actions .= '<a href="' . route('admin.loan-assign-clientdetails', $item->id) . '" class="btn btn-info btn-sm me-1">Foreclose</a>';
+                    }
+                    if (auth()->user() && auth()->user()->can('loanassign-edit')) {
+                        $actions .= '<a href="' . route('admin.loan-assign-edit', $item->id) . '" class="btn btn-warning btn-sm me-1">Edit</a>';
+                    }
+                    if (auth()->user() && auth()->user()->can('loanassign-delete')) {
+                        $actions .= '<a href="' . route('admin.loan-assign-delete', $item->id) . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to delete this record?\');">Delete</a>';
+                    }
+                    return $actions;
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
-        $data = $query->get();
-
-        return view('Admin.LoanAssign.index', compact('data', 'branches', 'branch_id'));
+        return view('Admin.LoanAssign.index', compact('branches', 'branch_id'));
     }
 
     // Edit Form

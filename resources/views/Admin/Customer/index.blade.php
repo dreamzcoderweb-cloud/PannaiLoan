@@ -27,12 +27,12 @@
                 </div>
                 <div class="card-body">
                     <!-- Branch Filter -->
-                    <form method="GET" action="{{ route('admin.customer-list') }}" class="mb-4" id="customerFilterForm">
+                    <form method="GET" action="{{ route('admin.customer-list') }}" class="mb-4" id="customerFilterForm" onsubmit="return false;">
                         <div class="row align-items-end">
                             <div class="col-md-4 col-lg-3">
                                 <div class="form-group mb-0">
                                     <label for="branch_id" class="form-label fw-bold">Select Branch</label>
-                                    <select name="branch_id" id="branch_id" class="form-select" onchange="document.getElementById('customerFilterForm').submit();">
+                                    <select name="branch_id" id="branch_id" class="form-select">
                                         <option value="">All Branches</option>
                                         @foreach($branches as $branch)
                                             <option value="{{ $branch->id }}" {{ (isset($branch_id) && $branch_id == $branch->id) ? 'selected' : '' }}>
@@ -62,46 +62,7 @@
                                     @endcanany
                                 </tr>
                             </thead>
-
                             <tbody id="customerTableBody">
-                                @foreach ($data as $item)
-                                    <tr class="customer-row">
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td class="customer-name">{{ $item->name }}</td>
-                                        <td class="customer-phone">{{ $item->phone }}</td>
-                                        <td>
-                                            @if(($item->loanAssign->collection_type_id ?? '') == 1)
-                                                Daily
-                                            @elseif(($item->loanAssign->collection_type_id ?? '') == 2)
-                                                Weekly
-                                            @elseif(($item->loanAssign->collection_type_id ?? '') == 3)
-                                                Monthly
-                                            @else
-                                                ---
-                                            @endif
-                                        </td>
-                                        <td>{{ $item->loanAssign->total_payableamt ?? '---'}}</td>
-                                        <td>
-                                            {{ $item->loanAssign?->emiCollections?->last()?->latestDetail?->remaining_payable_amount ?? '---' }}
-                                        </td>
-                                        <td>{{ $item->branch->branch_name ?? '---' }}</td>
-                                        <td>{{ $item->route->route_name ?? '---' }}</td>
-                                        @canany(['customer-edit', 'customer-view'])
-                                        <td>
-                                            @can('customer-view')
-                                            <a href="{{ route('admin.customer-view', $item->id) }}"
-                                                class="btn btn-success btn-sm">View
-                                            </a>
-                                            @endcan
-                                            @can('customer-edit')
-                                            <a href="{{ route('admin.customer-edit', $item->id) }}"
-                                                class="btn btn-warning btn-sm">Edit
-                                            </a>
-                                            @endcan
-                                        </td>
-                                        @endcanany
-                                    </tr>
-                                @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -110,12 +71,32 @@
         </div>
     </div>
 
-   
     <script>
         $(document).ready(function() {
             var table = $('#customerTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('admin.customer-list') }}",
+                    data: function(d) {
+                        d.branch_id = $('#branch_id').val();
+                    }
+                },
+                columns: [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'name', name: 'name' },
+                    { data: 'phone', name: 'phone' },
+                    { data: 'collection_type', name: 'collection_type', orderable: false, searchable: false },
+                    { data: 'total_payable', name: 'total_payable', orderable: false, searchable: false },
+                    { data: 'remaining_amount', name: 'remaining_amount', orderable: false, searchable: false },
+                    { data: 'branch_name', name: 'branch.branch_name' },
+                    { data: 'route_name', name: 'route.route_name' },
+                    @canany(['customer-edit', 'customer-view'])
+                    { data: 'action', name: 'action', orderable: false, searchable: false },
+                    @endcanany
+                ],
                 lengthChange: true,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 buttons: [
                     { extend: 'copy', className: 'btn btn-default', title: 'Pannai - Customer List' },
                     { extend: 'csv', className: 'btn btn-default', title: 'Pannai - Customer List' },
@@ -123,6 +104,10 @@
                     { extend: 'pdf', className: 'btn btn-default', title: 'Pannai - Customer List' },
                     { extend: 'print', className: 'btn btn-default', title: 'Pannai - Customer List' }
                 ]
+            });
+
+            $('#branch_id').on('change', function() {
+                table.draw();
             });
 
             table.buttons().container()

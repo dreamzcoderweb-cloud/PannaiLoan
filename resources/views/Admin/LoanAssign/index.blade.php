@@ -26,12 +26,12 @@
                 </div>
                 <div class="card-body">
                     <!-- Branch Filter -->
-                    <form method="GET" action="{{ route('admin.loan-assign-list') }}" class="mb-4" id="loanAssignFilterForm">
+                    <form method="GET" action="{{ route('admin.loan-assign-list') }}" class="mb-4" id="loanAssignFilterForm" onsubmit="return false;">
                         <div class="row align-items-end">
                             <div class="col-md-4 col-lg-3">
                                 <div class="form-group mb-0">
                                     <label for="branch_id" class="form-label fw-bold">Select Branch</label>
-                                    <select name="branch_id" id="branch_id" class="form-select" onchange="document.getElementById('loanAssignFilterForm').submit();">
+                                    <select name="branch_id" id="branch_id" class="form-select">
                                         <option value="">All Branches</option>
                                         @foreach($branches as $branch)
                                             <option value="{{ $branch->id }}" {{ (isset($branch_id) && $branch_id == $branch->id) ? 'selected' : '' }}>
@@ -61,90 +61,12 @@
                                     <th>Branch</th>
                                     <th>Routes</th>
                                     <th>Loan Amount</th>
-                                   
                                     @canany(['loanassign-edit','loanassign-delete'])
                                     <th>Actions</th>
                                     @endcanany
                                 </tr>
                             </thead>
                             <tbody id="loanAssignTableBody">
-                                @foreach ($data as $item)
-                                <tr class="loanassign-row">
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td class="customer-name">{{ $item->client_name->name ?? '---' }}</td>
-                                    <td class="customer-phone">{{ $item->phone }}</td>
-                                    <td class="loan-type">{{ $item->loan->loan_name ?? '---' }}</td>
-                                    <td>{{ $item->int->interest_id ?? '---' }}</td>
-                                    <td>
-                                        @if ($item->collection_type_id == 1)
-                                            Daily
-                                        @elseif ($item->collection_type_id == 2)
-                                            Weekly
-                                        @elseif ($item->collection_type_id == 3)
-                                            Monthly
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($item->collection_type_id == 3 && $item->document_charges !== null)
-                                            ₹{{ number_format($item->document_charges, 2) }}
-                                        @else
-                                            ---
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($item->collection_type_id == 1)
-                                            {{ $item->daily_emi }}
-                                        @elseif($item->collection_type_id == 2)
-                                            {{ $item->weekly_emi }}
-                                        @elseif($item->collection_type_id == 3)
-                                            {{ $item->monthly_emi }}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($item->collection_type_id == 2)
-                                        {{ $item->total_distribution }}
-                                        @else 
-                                         {{ $item->total_payableamt }}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if(optional($item->latestEmiCollection)->latestDetail)
-                                            {{ $item->latestEmiCollection->latestDetail->remaining_payable_amount }}
-                                        @else
-                                           ----
-                                        @endif
-                                    </td>
-                                    <td class="branch-name">{{ $item->branches->branch_name ?? '---' }}</td>
-                                    <td class="route-name">{{ $item->routes->route_name ?? '---' }}</td>
-                                    <td>{{ $item->loan_amount }}</td>
-                                    
-                                    @canany(['loanassign-edit','loanassign-delete'])
-                                    <td>
-                                         @if(optional($item->latestEmiCollection)->latestDetail)
-                                            <a href="{{ route('admin.loan-assign-clientdetails',$item->id) }}" class="btn btn-info btn-sm">
-                                                Foreclose
-                                            </a>
-                                        @endif
-                                            
-                                        @can('loanassign-edit')
-                                        <a href="{{ route('admin.loan-assign-edit', $item->id) }}"
-                                            class="btn btn-warning btn-sm">Edit
-                                        </a>
-                                        @endcan
-                                        
-                                       @can('loanassign-delete')
-                                       <a href="{{ route('admin.loan-assign-delete', $item->id) }}"
-                                        class="btn btn-danger btn-sm"
-                                        onclick="return confirm('Are you sure you want to delete this record?');">
-                                        Delete
-                                        </a>
-                                       @endcan
-                                    </td>
-                                    @endcanany
-                                </tr>
-                                @endforeach
-                                
-                                
                             </tbody>
                         </table>
                     </div>
@@ -153,12 +75,37 @@
         </div>
     </div>
 
-    
-      <script>
-       $(document).ready(function() {
+    <script>
+        $(document).ready(function() {
             var table = $('#loanAssignTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('admin.loan-assign-list') }}",
+                    data: function(d) {
+                        d.branch_id = $('#branch_id').val();
+                    }
+                },
+                columns: [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'client_name', name: 'client_name.name' },
+                    { data: 'phone', name: 'phone' },
+                    { data: 'loan_name', name: 'loan.loan_name' },
+                    { data: 'interest_rate', name: 'int.interest_id' },
+                    { data: 'collection_type', name: 'collection_type', orderable: false, searchable: false },
+                    { data: 'document_charges', name: 'document_charges', orderable: false, searchable: false },
+                    { data: 'emi_amount', name: 'emi_amount', orderable: false, searchable: false },
+                    { data: 'total_payable', name: 'total_payable', orderable: false, searchable: false },
+                    { data: 'remaining_amount', name: 'remaining_amount', orderable: false, searchable: false },
+                    { data: 'branch_name', name: 'branches.branch_name' },
+                    { data: 'route_name', name: 'routes.route_name' },
+                    { data: 'loan_amount', name: 'loan_amount' },
+                    @canany(['loanassign-edit','loanassign-delete'])
+                    { data: 'action', name: 'action', orderable: false, searchable: false },
+                    @endcanany
+                ],
                 lengthChange: true,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 buttons: [
                     {
                         extend: 'copy',
@@ -188,9 +135,10 @@
                 ]
             });
 
-            // Append buttons to the container - usually the standard wrapper has length menu on left (col-sm-6 eq 0)
-            // and search on right (col-sm-6 eq 1). 
-            // We can place buttons after the length menu.
+            $('#branch_id').on('change', function() {
+                table.draw();
+            });
+
             table.buttons().container()
                 .appendTo('#loanAssignTable_wrapper .col-md-6:eq(0)');
         });

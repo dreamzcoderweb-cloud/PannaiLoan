@@ -10,6 +10,7 @@ use App\Models\Emicollection;
 use App\Models\EmicollectionDetail;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Yajra\DataTables\Facades\DataTables;
 
 class EmiCollectionController extends Controller
 {
@@ -406,8 +407,48 @@ class EmiCollectionController extends Controller
 
     public function index(Request $request)
     {
-        $data = Emicollection::with('clientname')->get();
-        return view('Admin.Emicollection.index', compact('data'));
+        if ($request->ajax()) {
+            $data = Emicollection::with(['clientname', 'loanassign']);
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('client_name', fn($item) => $item->clientname->name ?? '---')
+                ->addColumn('customer_type', fn($item) => ($item->loanassign->client_type ?? null) == 1 ? 'Old' : 'New')
+                ->addColumn('collection_type', function ($item) {
+                    return match ($item->collection_type_id) {
+                        1 => 'Daily',
+                        2 => 'Weekly',
+                        3 => 'Monthly',
+                        default => '---',
+                    };
+                })
+                ->addColumn('total_payable_amount', fn($item) => $item->total_payable_amount)
+                ->addColumn('total_remaining', fn($item) => $item->total_remaining)
+                ->addColumn('total_collected', fn($item) => $item->total_collected)
+                ->addColumn('action', function ($item) {
+                    $actions = '';
+                    if (auth()->user() && auth()->user()->can('emicollection-view')) {
+                        $actions .= '<a href="' . route('admin.emicollection-view', $item->id) . '" class="btn btn-success btn-sm me-1">View</a>';
+                    }
+                    if (auth()->user() && auth()->user()->can('emicollection-delete')) {
+                        $customerName = htmlspecialchars($item->clientname->name ?? '---', ENT_QUOTES, 'UTF-8');
+                        $amount = number_format($item->total_payable_amount, 2);
+                        $type = match ($item->collection_type_id) {
+                            1 => 'Daily',
+                            2 => 'Weekly',
+                            3 => 'Monthly',
+                            default => '---',
+                        };
+                        $deleteUrl = route('admin.emicollection-delete', $item->id);
+                        $actions .= '<button type="button" class="btn btn-danger btn-sm delete-btn" data-url="' . $deleteUrl . '" data-customer="' . $customerName . '" data-amount="' . $amount . '" data-type="' . $type . '">Delete</button>';
+                    }
+                    return $actions;
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+
+        return view('Admin.Emicollection.index');
     }
 
     public function view($id)
