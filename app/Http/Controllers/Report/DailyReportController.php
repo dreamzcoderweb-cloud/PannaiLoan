@@ -318,14 +318,17 @@ class DailyReportController extends Controller
     private function getLoanAmount($loan)
     {
         if ($loan->collection_type_id == 2) {
-            return $loan->total_distribution;
+            return (float) ($loan->total_distribution ?? 0);
         }
 
         if ($loan->collection_type_id == 3) {
-            return $loan->loan_amount;
+            $loanAmount = (float) ($loan->loan_amount ?? 0);
+            $documentCharges = (float) ($loan->document_charges ?? 0);
+
+            return $loanAmount - $documentCharges;
         }
 
-        return 0;
+        return (float) ($loan->loan_amount ?? 0);
     }
 
     public function loan_collection()
@@ -367,7 +370,7 @@ class DailyReportController extends Controller
         }
 
         $loanAssignments = $query->get();
-       
+
         if ($request->ajax()) {
             return view('Admin.Report.partials.loan_table', compact('loanAssignments', 'from_date', 'to_date', 'branch_id'))->render();
         }
